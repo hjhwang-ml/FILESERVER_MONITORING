@@ -1,0 +1,53 @@
+/* filehub — 라이트 고정 · 드롭다운 · 목록 정렬 (2026-10-21)
+   style.css, drive.css 뒤에 불러서 덮어쓴다 (base.html 에서 맨 마지막 link). */
+
+:root {
+  color-scheme: light;            /* OS 가 다크여도 입력칸·스크롤바·드롭다운 목록을 밝게 */
+  --warn: #b45309;
+  --warn-soft: #fdf3e2;
+  --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7885' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+/* ---------- 드롭다운(select): 브라우저 기본 모양을 지우고 같은 톤으로 ---------- */
+select, .select {
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  padding-right: 34px; cursor: pointer; font-weight: 500;
+  background: var(--surface) var(--chev) no-repeat right 12px center / 12px 12px;
+  transition: border-color .15s, background-color .15s;
+}
+select:hover, .select:hover { border-color: var(--muted); }
+select::-ms-expand { display: none; }
+select option { background: var(--surface); color: var(--text); }
+select:invalid { color: var(--muted); }
+.select-sm { height: 30px; font-size: 13px; padding: 0 30px 0 10px; background-position: right 10px center; }
+.sort-form select { min-width: 124px; }
+.inline-form { margin: 0; }
+
+/* 열린 ⋮ 메뉴가 아래 줄에 가려지지 않게 그 줄을 위로 올린다 */
+.item:has(.kebab[open]), .item:focus-within { z-index: 6; }
+
+/* ---------- 목록 보기: 머리글 눌러 정렬 · 머리글과 줄의 칸 너비를 맞춘다 ---------- */
+.view-list { --cols: 40px minmax(0, 1fr) 180px 150px 90px 40px; }
+.view-list .item-headrow, .view-list .item-main { grid-template-columns: var(--cols); }
+.view-list .item-headrow { position: sticky; top: 64px; background: var(--surface); z-index: 2; }
+.view-list .item-name { justify-self: stretch; }
+.sort-head {
+  display: inline-flex; align-items: center; gap: 4px; color: var(--muted); padding: 4px 6px; margin: 0 -6px;
+  border-radius: 6px; white-space: nowrap; justify-self: start;
+}
+.sort-head.num { justify-self: end; }
+.sort-head:hover { color: var(--text); background: var(--surface-2); text-decoration: none; }
+.sort-head.on { color: var(--primary); }
+@media (max-width: 900px) {
+  .view-list { --cols: 34px minmax(0, 1fr) 76px 34px; }
+  .view-list .item-headrow > :nth-child(3), .view-list .item-headrow > :nth-child(4) { display: none; }
+}
+
+/* ---------- 회원가입 · 사용자 관리 ---------- */
+.login-alt { margin: 18px 0 0; text-align: center; color: var(--muted); font-size: 13px; }
+.login-alt a { font-weight: 700; }
+.grid-form { grid-template-columns: repeat(6, 1fr) auto; }
+.state-wait { color: var(--warn); background: var(--warn-soft); padding: 1px 8px; border-radius: 99px; }
+.actions { display: table-cell; text-align: right; white-space: nowrap; }
+.actions > form, .actions > details { display: inline-block; vertical-align: middle; margin: 0 0 0 6px; }
+@media (max-width: 760px) { .grid-form { grid-template-columns: 1fr; } }

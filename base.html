@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}filehub{% endblock %} · filehub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/drive.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% import "_icons.html" as icon %}
+
+{% if g.user %}
+{# 지금 보고 있는 폴더 (파일 화면에서만 있다) — 트리 강조 · 새 폴더 · 업로드 자리에 쓴다 #}
+{% set cur_folder_id = folder.id if (folder is defined and folder) else '' %}
+{% set open_ids = (trail|map(attribute='id')|list) if trail is defined else [] %}
+
+<div class="app">
+  <header class="appbar">
+    <button class="icon-btn nav-toggle" type="button" data-nav-toggle aria-label="메뉴 열기">{{ icon.menu() }}</button>
+    <a class="brand2" href="{{ url_for('files') }}">
+      <img src="{{ url_for('static', filename='img/favicon.svg') }}" alt="" width="32" height="32">
+      <span><b>filehub</b><small>사내 공유 드라이브</small></span>
+    </a>
+    <form class="search" method="get" action="{{ url_for('files') }}" role="search">
+      {{ icon.search() }}
+      <input type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="드라이브에서 검색" aria-label="드라이브에서 검색">
+    </form>
+    <div class="me2">
+      <span class="avatar" aria-hidden="true">{{ g.user.name[:1] }}</span>
+      <span class="me2-text"><b>{{ g.user.name }}</b><small>{{ ROLE_LABELS[g.user.role] }} · {{ g.user.username }}</small></span>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="icon-btn" title="로그아웃" aria-label="로그아웃">{{ icon.logout() }}</button>
+      </form>
+    </div>
+  </header>
+
+  <aside class="sidebar" id="sidebar">
+    {% if can_manage_folders %}
+    <details class="new-menu">
+      <summary class="btn-new">{{ icon.plus() }} 새로 만들기</summary>
+      <div class="menu">
+        <button type="button" data-open-folder>{{ icon.folder_plus() }} 새 폴더</button>
+        <button type="button" data-pick-files>{{ icon.upload() }} 파일 업로드</button>
+      </div>
+    </details>
+    {% else %}
+    <button type="button" class="btn-new" data-pick-files>{{ icon.upload() }} 파일 업로드</button>
+    {% endif %}
+
+    <nav class="tree" aria-label="폴더">
+      <a class="tree-item tree-root {{ 'on' if request.endpoint == 'files' and not cur_folder_id and not request.args.get('q') }}" href="{{ url_for('files') }}">
+        {{ icon.drive() }} 공유 드라이브
+      </a>
+      {% if folder_tree %}
+      <ul class="tree-list">
+        {% for node in folder_tree recursive %}
+        <li>
+          {% if node.children %}
+          <details {{ 'open' if node.id in open_ids }}>
+            <summary class="tree-item {{ 'on' if node.id == cur_folder_id }}">
+              <span class="chev">{{ icon.chevron() }}</span>
+              <a href="{{ url_for('files', folder=node.id) }}">{{ icon.folder(18) }}<span>{{ node.name }}</span></a>
+            </summary>
+            <ul class="tree-list">{{ loop(node.children) }}</ul>
+          </details>
+          {% else %}
+          <a class="tree-item {{ 'on' if node.id == cur_folder_id }}" href="{{ url_for('files', folder=node.id) }}">
+            <span class="chev"></span>{{ icon.folder(18) }}<span>{{ node.name }}</span>
+          </a>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </nav>
+
+    {% if g.user.role == 'admin' %}
+    <div class="side-label">관리</div>
+    <a class="side-link {{ 'on' if request.endpoint == 'admin_users' }}" href="{{ url_for('admin_users') }}">{{ icon.users() }} 사용자</a>
+    {% endif %}
+
+    {% if drive_storage %}
+    <div class="storage-mini {{ 'is-down' if not drive_storage.ok }}">
+      <div class="storage-mini-top">
+        <b>저장 공간</b>
+        <span class="dot {{ 'dot-ok' if drive_storage.ok else 'dot-bad' }}" title="{{ '정상' if drive_storage.ok else '쓰기 불가' }}"></span>
+      </div>
+      {% if drive_storage.total %}
+        <div class="meter"><span style="width: {{ [drive_storage.pct, 2]|max }}%"></span></div>
+        <div class="storage-mini-num"><b>{{ drive_storage.used|filesize }}</b> / {{ drive_storage.total|filesize }}</div>
+      {% else %}
+        <div class="storage-err">저장소에 접근할 수 없습니다</div>
+      {% endif %}
+      <div class="storage-mini-desc">{{ drive_storage.label }} · {{ drive_storage.desc }}</div>
+    </div>
+    {% endif %}
+  </aside>
+  <div class="scrim" data-nav-toggle></div>
+
+  <main class="content">
+{% else %}
+<main class="{% block main_class %}container{% endblock %}">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flashes">
+        {% for cat, msg in messages %}<div class="flash flash-{{ cat }}">{{ msg }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+{% if g.user %}
+
+  {# 알림 (flash) → 아래 가운데 토스트 #}
+  <div class="toasts" aria-live="polite">
+    {% for cat, msg in get_flashed_messages(with_categories=true) %}
+      <div class="toast toast-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+
+  {# 새 폴더 #}
+  {% if can_manage_folders %}
+  <dialog class="dlg" id="folder-dlg">
+    <form method="post" action="{{ url_for('create_folder') }}">
+      <h3>새 폴더</h3>
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <input type="hidden" name="parent_id" value="{{ cur_folder_id }}">
+      <input name="name" maxlength="100" required placeholder="폴더 이름" autocomplete="off">
+      <div class="dlg-actions">
+        <button class="btn" type="button" data-close-dialog>취소</button>
+        <button class="btn btn-primary">만들기</button>
+      </div>
+    </form>
+  </dialog>
+  {% endif %}
+
+  {# 여러 파일 업로드 — JS 가 하나씩 /upload 로 보낸다 #}
+  <input type="file" id="pick" multiple hidden>
+  <div id="upload-ctx" hidden data-url="{{ url_for('upload') }}" data-csrf="{{ csrf_token() }}" data-folder="{{ cur_folder_id }}" data-back="{{ url_for('files', folder=cur_folder_id or None) }}"></div>
+  <section class="upq" id="upq" hidden aria-live="polite">
+    <div class="upq-head"><b id="upq-title">업로드 중</b><button class="icon-btn" type="button" id="upq-close" aria-label="닫기">{{ icon.close() }}</button></div>
+    <ul id="upq-list"></ul>
+  </section>
+</div>
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{# filehub v4 — 화면에 쓰는 SVG 아이콘 (선 아이콘은 currentColor 를 따른다) #}
+{% macro line(d, size=18) -%}
+<svg class="i" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ d|safe }}</svg>
+{%- endmacro %}
+
+{% macro search() %}{{ line('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>') }}{% endmacro %}
+{% macro drive() %}{{ line('<path d="M3 13.5 5.6 6A2 2 0 0 1 7.5 4.6h9a2 2 0 0 1 1.9 1.4L21 13.5"/><rect x="3" y="13.5" width="18" height="6" rx="2"/><path d="M7 16.5h.01M11 16.5h.01"/>') }}{% endmacro %}
+{% macro plus() %}{{ line('<path d="M12 5v14M5 12h14"/>', 20) }}{% endmacro %}
+{% macro upload() %}{{ line('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/>') }}{% endmacro %}
+{% macro folder_plus() %}{{ line('<path d="M3 7.5A1.5 1.5 0 0 1 4.5 6H9l2 2h8.5A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/><path d="M12 11v5M9.5 13.5h5"/>') }}{% endmacro %}
+{% macro grid() %}{{ line('<rect x="4" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.2"/>') }}{% endmacro %}
+{% macro list() %}{{ line('<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>') }}{% endmacro %}
+{% macro logout() %}{{ line('<path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 16l4-4-4-4M14 12H4"/>') }}{% endmacro %}
+{% macro users() %}{{ line('<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3.2 3.2 0 0 1 0 6M17.5 14a5.5 5.5 0 0 1 3 5"/>') }}{% endmacro %}
+{% macro shield() %}{{ line('<path d="M12 3 5 6v5.5c0 4.2 3 7.8 7 9.5 4-1.7 7-5.3 7-9.5V6z"/><path d="m9 12 2 2 4-4"/>') }}{% endmacro %}
+{% macro chevron() %}{{ line('<path d="m9 6 6 6-6 6"/>', 14) }}{% endmacro %}
+{% macro more() %}{{ line('<circle cx="12" cy="5.5" r=".9"/><circle cx="12" cy="12" r=".9"/><circle cx="12" cy="18.5" r=".9"/>') }}{% endmacro %}
+{% macro menu() %}{{ line('<path d="M4 7h16M4 12h16M4 17h16"/>', 20) }}{% endmacro %}
+{% macro close() %}{{ line('<path d="M6 6l12 12M18 6 6 18"/>') }}{% endmacro %}
+{% macro download() %}{{ line('<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>', 16) }}{% endmacro %}
+{% macro swap() %}{{ line('<path d="M4 8h13l-3-3M20 16H7l3 3"/>', 16) }}{% endmacro %}
+{% macro sun() %}<span class="ic-sun">{{ line('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>', 20) }}</span>{% endmacro %}
+{% macro moon() %}<span class="ic-moon">{{ line('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>', 20) }}</span>{% endmacro %}
+{% macro sort_arrow(dir) %}{{ line('<path d="M12 5v14M7 14l5 5 5-5"/>' if dir == 'desc' else '<path d="M12 19V5M7 10l5-5 5 5"/>', 13) }}{% endmacro %}
+
+{% macro trash() %}{{ line('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 0 0 1.5 1.4h7A1.5 1.5 0 0 0 17 19l1-12M9 7V4.5h6V7"/>', 16) }}{% endmacro %}
+
+{# 노란 폴더 #}
+{% macro folder(size=18) -%}
+<svg class="ico-folder" width="{{ size }}" height="{{ (size * 0.78)|round|int }}" viewBox="0 0 64 50" aria-hidden="true">
+  <path d="M5 2h17.5c1.3 0 2.5.6 3.3 1.6L30 9h29a5 5 0 0 1 5 5v31a5 5 0 0 1-5 5H5a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5z" fill="var(--folder-back)"/>
+  <path d="M0 17a5 5 0 0 1 5-5h54a5 5 0 0 1 5 5v28a5 5 0 0 1-5 5H5a5 5 0 0 1-5-5z" fill="var(--folder)"/>
+</svg>
+{%- endmacro %}
+
+{# 귀퉁이 접힌 문서 + 확장자 글자 #}
+{% macro doc(label, kind) -%}
+<span class="ico-doc ft-{{ kind }}" aria-hidden="true">
+  <svg viewBox="0 0 48 60"><path class="doc-body" d="M5 0h27l16 16v39a5 5 0 0 1-5 5H5a5 5 0 0 1-5-5V5a5 5 0 0 1 5-5z"/><path class="doc-fold" d="M32 0v11a5 5 0 0 0 5 5h11z"/></svg>
+  <b>{{ label }}</b>
+</span>
+{%- endmacro %}

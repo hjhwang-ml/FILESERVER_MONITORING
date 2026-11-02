@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}감사 로그{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="list-head">
+    <h2>감사 로그 <small>최근 {{ logs|length }}건</small></h2>
+    <form method="get" class="filters">
+      <select name="action" class="select" onchange="this.form.submit()">
+        <option value="">모든 행위</option>
+        {% for a in actions %}<option value="{{ a }}" {{ 'selected' if a == cur_action }}>{{ a }}</option>{% endfor %}
+      </select>
+      <select name="result" class="select" onchange="this.form.submit()">
+        <option value="">모든 결과</option>
+        <option value="SUCCESS" {{ 'selected' if cur_result == 'SUCCESS' }}>SUCCESS</option>
+        <option value="FAIL" {{ 'selected' if cur_result == 'FAIL' }}>FAIL</option>
+      </select>
+    </form>
+  </div>
+
+  {% if logs %}
+  <div class="table-wrap">
+  <table class="table table-dense">
+    <thead>
+      <tr><th>시각</th><th>사용자</th><th>IP</th><th>행위</th><th>결과</th><th>파일</th><th>상세</th></tr>
+    </thead>
+    <tbody>
+    {% for l in logs %}
+      <tr class="{{ 'row-fail' if l.result == 'FAIL' }}">
+        <td class="muted mono">{{ l.created_at.strftime('%m-%d %H:%M:%S') }}</td>
+        <td>{{ l.username }}{% if not l.user_id %} <small class="muted">(없는 계정)</small>{% endif %}</td>
+        <td class="mono">{{ l.client_ip }}</td>
+        <td><span class="act act-{{ l.action|lower }}">{{ l.action }}</span></td>
+        <td><span class="state {{ 'state-ok' if l.result == 'SUCCESS' else 'state-bad' }}">{{ l.result }}</span></td>
+        <td class="fname">{{ l.file_name or '' }}</td>
+        <td class="muted">{{ l.detail or '' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+    <p class="empty">기록이 없습니다.</p>
+  {% endif %}
+</section>
+{% endblock %}

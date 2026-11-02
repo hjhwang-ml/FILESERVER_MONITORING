@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icon %}
+{% block title %}{{ folder.name if folder else '공유 드라이브' }}{% endblock %}
+
+{% block content %}
+{# 목록 머리글 정렬 링크: 지금 칸을 다시 누르면 방향이 바뀐다 #}
+{% macro sort_head(key, label, cls='') -%}
+  {%- set on = (sort == key) -%}
+  {%- set next_dir = ('desc' if direction == 'asc' else 'asc') if on else None -%}
+  <a class="sort-head {{ cls }} {{ 'on' if on }}" href="{{ url_for('files', folder=folder.id if folder else None, q=q or None, sort=key, dir=next_dir) }}">
+    <span>{{ label }}</span>{% if on %}{{ icon.sort_arrow(direction) }}{% endif %}
+  </a>
+{%- endmacro %}
+<section class="drive" id="drive">
+  <div class="drive-head">
+    <div class="drive-title">
+      <h1 class="crumbs">
+        {% if q %}
+          「{{ q }}」 검색 결과
+        {% else %}
+          {% if trail %}<a href="{{ url_for('files', sort=sort, dir=direction) }}">공유 드라이브</a>{% else %}공유 드라이브{% endif %}
+          {% for t in trail %}
+            <span class="sep">{{ icon.chevron() }}</span>
+            {% if loop.last %}<span>{{ t.name }}</span>{% else %}<a href="{{ url_for('files', folder=t.id, sort=sort, dir=direction) }}">{{ t.name }}</a>{% endif %}
+          {% endfor %}
+        {% endif %}
+      </h1>
+      <p class="drive-sub">폴더 {{ subfolders|length }}개 · 파일 {{ files|length }}개 ({{ total_bytes|filesize }})</p>
+    </div>
+
+    <div class="drive-tools">
+      {% if can_manage_folders and not q %}
+        <button class="btn btn-soft" type="button" data-open-folder>{{ icon.folder_plus() }} 새 폴더</button>
+      {% endif %}
+      {% if not q %}
+        <button class="btn btn-primary" type="button" data-pick-files>{{ icon.upload() }} 업로드</button>
+      {% endif %}
+      <form method="get" class="sort-form">
+        {% if folder %}<input type="hidden" name="folder" value="{{ folder.id }}">{% endif %}
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        <select name="sort" class="select" aria-label="정렬" onchange="this.form.submit()">
+          {% for key, label in SORT_LABELS.items() %}
+            <option value="{{ key }}" {{ 'selected' if key == sort }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <noscript><button class="btn btn-sm">정렬</button></noscript>
+      </form>
+      <div class="view-toggle" role="group" aria-label="보기">
+        <button type="button" data-view="grid" class="on" aria-label="격자로 보기" title="격자">{{ icon.grid() }}</button>
+        <button type="button" data-view="list" aria-label="목록으로 보기" title="목록">{{ icon.list() }}</button>
+      </div>
+    </div>
+  </div>
+
+  {% if subfolders or files %}
+  <div class="items view-grid" id="items">
+    <div class="item-headrow">
+      <span></span>{{ sort_head('name', '이름') }}{{ sort_head('who', '올린 사람') }}{{ sort_head('new', '수정 시각') }}{{ sort_head('size', '크기', 'num') }}<span></span>
+    </div>
+
+    {% for d in subfolders %}
+    <div class="item item-folder">
+      <a class="item-main" href="{{ url_for('files', folder=d.id, sort=sort, dir=direction) }}">
+        <span class="item-ico">{{ icon.folder(72) }}</span>
+        <span class="item-name">{{ d.name }}</span>
+        <span class="item-meta">항목 {{ d.item_count }}개</span>
+        <span class="item-who">—</span>
+        <span class="item-when">{{ d.created_at|dt }}</span>
+        <span class="item-size num">—</span>
+      </a>
+      {% if can_manage_folders and g.user.role == 'admin' and d.id > 0 and d.item_count == 0 %}
+      <details class="kebab">
+        <summary aria-label="더 보기">{{ icon.more() }}</summary>
+        <div class="menu">
+          <form method="post" action="{{ url_for('delete_folder', folder_id=d.id) }}" data-confirm="'{{ d.name }}' 폴더를 지울까요?">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <button class="danger">{{ icon.trash() }} 폴더 지우기</button>
+          </form>
+        </div>
+      </details>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    {% for f in files %}
+    {% set ft = f.original_name|ftype %}
+    <div class="item item-file">
+      <a class="item-main" href="{{ url_for('download', file_id=f.id) }}" title="받기 · {{ f.original_name }}">
+        <span class="item-ico">{{ icon.doc(ft[0], ft[1]) }}</span>
+        <span class="item-name">{{ f.original_name }}</span>
+        <span class="item-meta">{{ f.size_bytes|filesize }} · {{ f.updated_at|md }}</span>
+        <span class="item-who">{{ f.uploader_name }} <small>{{ f.uploader_username }}</small></span>
+        <span class="item-when">{{ f.updated_at|dt }}</span>
+        <span class="item-size num">{{ f.size_bytes|filesize }}</span>
+      </a>
+      <details class="kebab">
+        <summary aria-label="더 보기">{{ icon.more() }}</summary>
+        <div class="menu">
+          <a href="{{ url_for('download', file_id=f.id) }}">{{ icon.download() }} 다운로드</a>
+          {% if can_modify(f) %}
+          <form method="post" action="{{ url_for('replace', file_id=f.id) }}" enctype="multipart/form-data" class="replace-form">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <label class="as-btn">{{ icon.swap() }} 내용 바꾸기<input type="file" name="file" required hidden data-autosubmit></label>
+          </form>
+          <form method="post" action="{{ url_for('delete', file_id=f.id) }}" data-confirm="'{{ f.original_name }}' 을(를) 삭제할까요?">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <button class="danger">{{ icon.trash() }} 삭제</button>
+          </form>
+          {% endif %}
+        </div>
+      </details>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-drive">
+    {{ icon.folder(96) }}
+    <p>{{ '검색 결과가 없습니다.' if q else '이 폴더는 비어 있습니다.' }}</p>
+    {% if not q %}<p class="muted">파일을 여기로 끌어 놓거나 「업로드」를 누르세요.</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if not q %}<div class="drop-hint" id="drop-hint">여기에 놓으면 「{{ folder.name if folder else '공유 드라이브' }}」에 올라갑니다</div>{% endif %}
+</section>
+{% endblock %}

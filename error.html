@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}오류 {{ code }}{% endblock %}
+
+{% block content %}
+<section class="panel error-panel">
+  <div class="error-code">{{ code }}</div>
+  <p>{{ message }}</p>
+  <a class="btn" href="{{ url_for('index') }}">처음으로</a>
+</section>
+{% endblock %}

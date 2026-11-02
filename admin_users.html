@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}사용자 관리{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <h2>계정 만들기</h2>
+  <form method="post" class="grid-form">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label>아이디 <input name="username" required maxlength="50"></label>
+    <label>이름 <input name="name" required maxlength="50"></label>
+    <label>이메일 <input name="email" type="email" required maxlength="255"></label>
+    <label>역할
+      <select name="role" class="select">
+        <option value="staff">직원</option>
+        <option value="admin">관리자</option>
+      </select>
+    </label>
+    <label>소속팀
+      <select name="team" class="select">
+        <option value="">없음</option>
+        {% for key, label in TEAMS.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>초기 비밀번호 <input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+    <button class="btn btn-primary">만들기</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>사용자 <small>{{ users|length }}명</small></h2>
+  <div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr><th>아이디</th><th>이름</th><th>이메일</th><th>소속팀</th><th>역할</th><th>상태</th><th class="num">연속 실패</th><th>마지막 로그인</th><th></th></tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td><b>{{ u.username }}</b></td>
+        <td>{{ u.name }}</td>
+        <td class="muted">{{ u.email }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin_user_action', user_id=u.id, action='team') }}" class="inline-form">
+            <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+            <select name="team" class="select select-sm" onchange="this.form.submit()" aria-label="{{ u.username }} 소속팀">
+              <option value="" {{ 'selected' if not u.team }}>없음</option>
+              {% for key, label in TEAMS.items() %}<option value="{{ key }}" {{ 'selected' if u.team == key }}>{{ label }}</option>{% endfor %}
+            </select>
+          </form>
+        </td>
+        <td><span class="role role-{{ u.role }}">{{ ROLE_LABELS[u.role] }}</span></td>
+        <td>{% if u.is_locked and not u.last_login_at %}<span class="state state-wait">승인 대기</span>{% elif u.is_locked %}<span class="state state-bad">잠김</span>{% else %}<span class="state state-ok">정상</span>{% endif %}</td>
+        <td class="num">{{ u.failed_count }}</td>
+        <td class="muted">{{ u.last_login_at|dt }}</td>
+        <td class="actions">
+          {% if u.is_locked %}
+            <form method="post" action="{{ url_for('admin_user_action', user_id=u.id, action='unlock') }}">
+              <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+              <button class="btn btn-sm {{ 'btn-primary' if not u.last_login_at }}">{{ '승인' if not u.last_login_at else '잠금 해제' }}</button>
+            </form>
+          {% elif u.id != g.user.id %}
+            <form method="post" action="{{ url_for('admin_user_action', user_id=u.id, action='lock') }}" data-confirm="'{{ u.username }}' 계정을 잠글까요?">
+              <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-ghost">잠금</button>
+            </form>
+          {% endif %}
+          <details class="replace">
+            <summary class="btn btn-sm btn-ghost">비밀번호</summary>
+            <form method="post" action="{{ url_for('admin_user_action', user_id=u.id, action='password') }}">
+              <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+              <input name="password" type="password" minlength="8" placeholder="새 비밀번호" required autocomplete="new-password">
+              <button class="btn btn-sm btn-primary">변경</button>
+            </form>
+          </details>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

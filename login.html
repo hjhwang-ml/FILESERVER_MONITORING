@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}로그인{% endblock %}
+{% block body_class %}page-login{% endblock %}
+{% block main_class %}login-wrap{% endblock %}
+
+{% block content %}
+<div class="login-card">
+  <div class="login-head">
+    <img src="{{ url_for('static', filename='img/favicon.svg') }}" alt="" width="40" height="40">
+    <h1>filehub</h1>
+    <p>사내 공유 드라이브</p>
+  </div>
+
+  <form method="post" action="{{ url_for('login') }}" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <label>아이디
+      <input name="username" autocomplete="username" required autofocus>
+    </label>
+    <label>비밀번호
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <button class="btn btn-primary btn-block">로그인</button>
+  </form>
+
+  <p class="login-alt">계정이 없나요? <a href="{{ url_for('signup') }}">회원가입</a></p>
+  <p class="login-foot">허가된 사용자만 접근할 수 있습니다. 모든 접속과 파일 이용 기록은 저장됩니다.</p>
+</div>
+{% endblock %}
